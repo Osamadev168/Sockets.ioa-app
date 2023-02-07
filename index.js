@@ -1,31 +1,18 @@
-const express = require("express");
-const app = express();
-const http = require("http");
-const cors = require("cors");
-const { Server } = require("socket.io");
-
-app.use(cors());
-const server = http.createServer(app);
-const io = new Server(server, {
+const io = require("socket.io")(5000, {
   cors: {
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST"],
+    origin: ["http://localhost:5173"],
   },
 });
-io.on("connection", (socket) => {
-  socket.on("join_room", (data) => {
-    socket.join(data);
-    console.log(`User with ID: ${socket.id} joined room: ${data}`);
-  });
-  socket.on("send_message", (data) => {
-    socket.to(data.room).emit("recieve_message", data);
 
-    console.log("Message sent", data);
+io.on("connection", (socket) => {
+  socket.onAny((event, ...args) => {
+    console.log(event, args);
   });
-  socket.on("disconnect", (data) => {
-    console.log("User left" + socket.id);
+  console.log(`user with id ${socket.id} is connected`);
+  socket.on("send-message", (message) => {
+    io.to(message.room).emit("receive-message-room", message);
   });
-});
-server.listen(5000, () => {
-  console.log("Server is runing");
+  socket.on("join-room", (room) => {
+    socket.join(room);
+  });
 });
